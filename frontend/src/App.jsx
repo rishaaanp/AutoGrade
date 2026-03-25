@@ -36,101 +36,114 @@ function App() {
   };
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>🚀 AutoGrade AI</h1>
-      <p style={styles.subtitle}>Upload PDFs and get instant grading</p>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <h1 style={styles.title}>AutoGrade AI</h1>
+        <p style={styles.subtitle}>Smart evaluation of answer sheets</p>
 
-      <div style={styles.card}>
-        <div style={styles.uploadBox}>
-          <label>Teacher PDF</label>
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setTeacherFile(e.target.files[0])}
-          />
-          {teacherFile && <p style={styles.file}>{teacherFile.name}</p>}
+        <div style={styles.card}>
+          <div style={styles.uploadBox}>
+            <label>Teacher PDF</label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setTeacherFile(e.target.files[0])}
+            />
+            {teacherFile && <span style={styles.file}>{teacherFile.name}</span>}
+          </div>
+
+          <div style={styles.uploadBox}>
+            <label>Student PDF</label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setStudentFile(e.target.files[0])}
+            />
+            {studentFile && <span style={styles.file}>{studentFile.name}</span>}
+          </div>
+
+          <button onClick={handleSubmit} style={styles.button}>
+            {loading ? "Grading..." : "Grade Now"}
+          </button>
         </div>
 
-        <div style={styles.uploadBox}>
-          <label>Student PDF</label>
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setStudentFile(e.target.files[0])}
-          />
-          {studentFile && <p style={styles.file}>{studentFile.name}</p>}
-        </div>
+        {loading && <div style={styles.loader}></div>}
 
-        <button onClick={handleSubmit} style={styles.button}>
-          {loading ? "Grading..." : "Grade Now"}
-        </button>
+        {result && (
+          <div style={styles.result}>
+            <h2 style={styles.score}>
+              Score: {result.total} / {result.max}
+            </h2>
+
+            {result.results.map((r, i) => (
+              <div key={i} style={styles.question}>
+                <p><strong>Q{i + 1}:</strong> {r.question}</p>
+                <p><strong>Answer:</strong> {r.student_answer}</p>
+                <p style={styles.marks}><strong>Marks:</strong> {r.marks} / 10</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {loading && <div style={styles.loader}></div>}
-
-      {result && (
-        <div style={styles.result}>
-          <h2>🎯 Score: {result.total} / {result.max}</h2>
-
-          {result.results.map((r, i) => (
-            <div key={i} style={styles.question}>
-              <p><b>Q{i + 1}:</b> {r.question}</p>
-              <p><b>Answer:</b> {r.student_answer}</p>
-              <p style={styles.marks}><b>Marks:</b> {r.marks} / 10</p>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
 
 const styles = {
+  page: {
+    background: "#f4f6f9",
+    minHeight: "100vh",
+    padding: "40px 0"
+  },
   container: {
     maxWidth: "700px",
     margin: "auto",
-    padding: "40px",
-    fontFamily: "sans-serif",
-    textAlign: "center"
+    fontFamily: "Inter, sans-serif"
   },
   title: {
+    textAlign: "center",
     fontSize: "32px",
     marginBottom: "5px"
   },
   subtitle: {
-    color: "gray",
-    marginBottom: "30px"
+    textAlign: "center",
+    color: "#666",
+    marginBottom: "25px"
   },
   card: {
-    background: "#ffffff",
+    background: "#fff",
     padding: "25px",
-    borderRadius: "15px",
-    boxShadow: "0 5px 20px rgba(0,0,0,0.1)"
+    borderRadius: "14px",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.08)"
   },
   uploadBox: {
-    marginBottom: "20px",
-    textAlign: "left"
+    marginBottom: "18px",
+    display: "flex",
+    flexDirection: "column"
   },
   file: {
     fontSize: "12px",
-    color: "gray"
+    color: "#888",
+    marginTop: "5px"
   },
   button: {
+    marginTop: "10px",
     padding: "12px",
     width: "100%",
-    background: "#4CAF50",
-    color: "white",
+    background: "#6366f1",
+    color: "#fff",
     border: "none",
     borderRadius: "8px",
     fontWeight: "bold",
-    cursor: "pointer"
+    cursor: "pointer",
+    transition: "0.3s"
   },
   loader: {
     marginTop: "20px",
     width: "40px",
     height: "40px",
     border: "5px solid #eee",
-    borderTop: "5px solid #4CAF50",
+    borderTop: "5px solid #6366f1",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
     marginLeft: "auto",
@@ -139,16 +152,18 @@ const styles = {
   result: {
     marginTop: "30px"
   },
+  score: {
+    marginBottom: "15px"
+  },
   question: {
     background: "#fff",
     padding: "15px",
     borderRadius: "10px",
-    marginBottom: "15px",
-    border: "1px solid #ddd",
-    textAlign: "left"
+    marginBottom: "12px",
+    border: "1px solid #eee"
   },
   marks: {
-    color: "green",
+    color: "#16a34a",
     fontWeight: "bold"
   }
 };
