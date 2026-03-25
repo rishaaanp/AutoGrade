@@ -10,14 +10,14 @@ It compares student answers with teacher answers and assigns marks based on sema
 - **AI/NLP:** Sentence Transformers, CrossEncoder  
 - **Tools:** PyPDF2  
 
-## Run Locally
+## ▶️ Run Locally
 
-### Backend
 ```bash
+#  Backend
 cd backend
 python app.py
 
-### Frontend
+#  Frontend
 cd frontend
 npm install
 npm run dev
