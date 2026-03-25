@@ -55,16 +55,11 @@ def parse_teacher_pdf(text):
     return qa_pairs
 
 
-# -------- EXTRACT CONCEPTS --------
-def extract_concepts(answer):
-    parts = re.split(r',|\.', answer)
-    return [p.strip() for p in parts if len(p.strip()) > 3]
-
-
-# -------- STUDENT PARSER --------
+# -------- BETTER STUDENT PARSER --------
 def parse_student_pdf(text, questions):
+
     sentences = re.split(r'(?<=[.!?])\s+', text)
-    sentences = [s for s in sentences if len(s.strip()) > 5]
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 5]
 
     sentence_embeddings = embed_model.encode(sentences)
 
@@ -72,18 +67,35 @@ def parse_student_pdf(text, questions):
 
     for q in questions:
         q_emb = embed_model.encode([q])[0]
+
         sims = cosine_similarity([q_emb], sentence_embeddings)[0]
 
-        top_indices = sims.argsort()[-3:][::-1]
-        selected = [sentences[i] for i in top_indices]
+        # Select relevant sentences
+        selected = [
+            sentences[i]
+            for i in range(len(sims))
+            if sims[i] > 0.3
+        ]
 
-        answers.append(" ".join(selected))
+        # Fallback if nothing selected
+        if not selected:
+            top_indices = sims.argsort()[-3:]
+            selected = [sentences[i] for i in top_indices]
+
+        answers.append(" ".join(selected[:5]))
 
     return answers
 
 
-# -------- CONCEPT SCORE --------
+# -------- EXTRACT CONCEPTS --------
+def extract_concepts(answer):
+    parts = re.split(r',|\.', answer)
+    return [p.strip() for p in parts if len(p.strip()) > 3]
+
+
+# -------- WEIGHTED CONCEPT SCORE --------
 def concept_score(correct, student):
+
     concepts = extract_concepts(correct)
 
     if not concepts:
@@ -94,19 +106,29 @@ def concept_score(correct, student):
 
     sims = cosine_similarity([student_emb], concept_embs)[0]
 
-    matched = sum(1 for s in sims if s > 0.5)
+    score = 0
+    max_score = 0
 
-    return matched / len(concepts)
+    for i, sim in enumerate(sims):
+        weight = 1 + (len(concepts[i].split()) / 5)
+
+        max_score += weight
+
+        if sim > 0.5:
+            score += sim * weight
+
+    return float(score / max_score)
 
 
 # -------- SEMANTIC SCORE --------
 def semantic_score(correct, student):
     score = cross_encoder.predict([(correct, student)])[0]
-    return max(0, min(1, score))
+    return float(max(0, min(1, score)))
 
 
 # -------- KEYWORD SCORE --------
 def keyword_score(correct, student):
+
     c_words = set(correct.lower().split())
     s_words = set(student.lower().split())
 
@@ -116,12 +138,35 @@ def keyword_score(correct, student):
     return len(c_words & s_words) / len(c_words)
 
 
+# -------- QUESTION RELEVANCE --------
+def question_similarity(question, student):
+    emb = embed_model.encode([question, student])
+    return cosine_similarity([emb[0]], [emb[1]])[0][0]
+
+
+# -------- IRRELEVANT PENALTY --------
+def irrelevant_penalty(question, student):
+    sim = question_similarity(question, student)
+
+    if sim < 0.2:
+        return 0.5   # heavy penalty
+    elif sim < 0.4:
+        return 0.8   # mild penalty
+    return 1
+
+
 # -------- FINAL GRADING --------
 def grade_answer(question, correct, student):
+
+    # Short answer penalty
+    if len(student.split()) < 5:
+        return 1
 
     c_score = concept_score(correct, student)
     s_score = semantic_score(correct, student)
     k_score = keyword_score(correct, student)
+
+    penalty = irrelevant_penalty(question, student)
 
     final = (
         0.5 * c_score +
@@ -129,7 +174,13 @@ def grade_answer(question, correct, student):
         0.2 * k_score
     )
 
+    # Length normalization
     length_factor = min(1, len(student.split()) / 20)
     final *= length_factor
 
-    return round(min(10, final * 10), 2)
+    # Apply penalty
+    final *= penalty
+
+    marks = final * 10
+
+    return float(round(min(10, marks), 2))

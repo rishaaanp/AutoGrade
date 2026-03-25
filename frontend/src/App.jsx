@@ -22,12 +22,7 @@ function App() {
 
       const res = await axios.post(
         "http://localhost:8000/grade",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
 
       setResult(res.data);
@@ -42,7 +37,8 @@ function App() {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>📄 AutoGrade AI</h1>
+      <h1 style={styles.title}>🚀 AutoGrade AI</h1>
+      <p style={styles.subtitle}>Upload PDFs and get instant grading</p>
 
       <div style={styles.card}>
         <div style={styles.uploadBox}>
@@ -52,7 +48,7 @@ function App() {
             accept="application/pdf"
             onChange={(e) => setTeacherFile(e.target.files[0])}
           />
-          {teacherFile && <p>{teacherFile.name}</p>}
+          {teacherFile && <p style={styles.file}>{teacherFile.name}</p>}
         </div>
 
         <div style={styles.uploadBox}>
@@ -62,13 +58,15 @@ function App() {
             accept="application/pdf"
             onChange={(e) => setStudentFile(e.target.files[0])}
           />
-          {studentFile && <p>{studentFile.name}</p>}
+          {studentFile && <p style={styles.file}>{studentFile.name}</p>}
         </div>
 
-        <button onClick={handleSubmit} disabled={loading} style={styles.button}>
+        <button onClick={handleSubmit} style={styles.button}>
           {loading ? "Grading..." : "Grade Now"}
         </button>
       </div>
+
+      {loading && <div style={styles.loader}></div>}
 
       {result && (
         <div style={styles.result}>
@@ -89,33 +87,54 @@ function App() {
 
 const styles = {
   container: {
-    maxWidth: "800px",
+    maxWidth: "700px",
     margin: "auto",
-    padding: "30px",
-    fontFamily: "Arial"
+    padding: "40px",
+    fontFamily: "sans-serif",
+    textAlign: "center"
   },
   title: {
-    textAlign: "center",
-    marginBottom: "20px"
+    fontSize: "32px",
+    marginBottom: "5px"
+  },
+  subtitle: {
+    color: "gray",
+    marginBottom: "30px"
   },
   card: {
-    background: "#f5f5f5",
-    padding: "20px",
-    borderRadius: "12px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+    background: "#ffffff",
+    padding: "25px",
+    borderRadius: "15px",
+    boxShadow: "0 5px 20px rgba(0,0,0,0.1)"
   },
   uploadBox: {
-    marginBottom: "15px"
+    marginBottom: "20px",
+    textAlign: "left"
+  },
+  file: {
+    fontSize: "12px",
+    color: "gray"
   },
   button: {
-    width: "100%",
     padding: "12px",
+    width: "100%",
     background: "#4CAF50",
     color: "white",
     border: "none",
     borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    cursor: "pointer"
+  },
+  loader: {
+    marginTop: "20px",
+    width: "40px",
+    height: "40px",
+    border: "5px solid #eee",
+    borderTop: "5px solid #4CAF50",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+    marginLeft: "auto",
+    marginRight: "auto"
   },
   result: {
     marginTop: "30px"
@@ -124,8 +143,9 @@ const styles = {
     background: "#fff",
     padding: "15px",
     borderRadius: "10px",
-    marginBottom: "10px",
-    border: "1px solid #ddd"
+    marginBottom: "15px",
+    border: "1px solid #ddd",
+    textAlign: "left"
   },
   marks: {
     color: "green",
